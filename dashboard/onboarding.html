@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Onboarding Path — Developer Onboarding Buddy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #14171C;
+    --surface:  #1C2028;
+    --gold:     #C98A3B;
+    --teal:     #4F8A7B;
+    --text:     #E8E6DF;
+    --muted:    #8B9099;
+    --error:    #C15B4A;
+    --border:   #272C35;
+    --trail-w:  2px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* ─── LAYOUT ────────────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+
+  header {
+    grid-column: 1 / -1;
+    padding: 28px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .header-left { flex: 1; }
+
+  h1 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .tagline {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .progress-pill {
+    font-size: 0.78rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 5px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .progress-pill strong {
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .level-toggle { display: flex; align-items: center; }
+
+  .level-switch-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .level-switch-btn:hover { border-color: var(--muted); color: var(--text); }
+  .level-switch-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* ─── TRAIL SIDEBAR ─────────────────────────────── */
+  .trail-col {
+    grid-row: 2;
+    padding: 40px 0 60px 40px;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 85px);
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+  }
+
+  .trail {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* The continuous vertical line behind waypoints */
+  .trail::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 18px;
+    width: var(--trail-w);
+    bottom: 18px;
+    background: var(--border);
+    z-index: 0;
+  }
+
+  /* Gold fill line — grows with progress */
+  .trail-fill {
+    position: absolute;
+    left: 14px;
+    top: 18px;
+    width: var(--trail-w);
+    height: 0%;
+    background: var(--gold);
+    z-index: 1;
+    transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .waypoint {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 0 0 36px 0;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-align: left;
+    color: inherit;
+    width: 100%;
+  }
+
+  .waypoint:focus-visible .marker {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+  }
+
+  .marker {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: var(--trail-w) solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    transition: border-color 0.3s, background 0.3s, color 0.3s;
+    position: relative;
+    z-index: 2;
+  }
+
+  .waypoint.done .marker {
+    border-color: var(--gold);
+    background: var(--gold);
+    color: var(--bg);
+  }
+
+  .waypoint.active .marker {
+    border-color: var(--gold);
+    background: var(--bg);
+    color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(201,138,59,0.15);
+  }
+
+  .waypoint.locked .marker {
+    opacity: 0.35;
+  }
+
+  .waypoint-label {
+    padding-top: 4px;
+    transition: opacity 0.3s;
+  }
+
+  .waypoint.locked .waypoint-label { opacity: 0.35; }
+
+  .wp-day {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: none;
+    letter-spacing: 0.01em;
+  }
+
+  .wp-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+    max-width: 170px;
+  }
+
+  .waypoint.active .wp-title { color: var(--gold); }
+
+  /* Architecture link at bottom of trail */
+  .arch-link {
+    margin-top: 8px;
+    padding-left: 6px;
+  }
+
+  .arch-link button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.8rem;
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .arch-link button:hover { color: var(--text); }
+  .arch-link button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 2px; }
+
+  .arch-link .icon {
+    width: 16px; height: 16px;
+    opacity: 0.5;
+  }
+
+  /* ─── MAIN CONTENT ──────────────────────────────── */
+  .content-col {
+    grid-row: 2;
+    padding: 40px 48px 80px;
+    overflow-y: auto;
+  }
+
+  /* Day panel */
+  .day-panel { display: none; max-width: 740px; }
+  .day-panel.visible { display: block; }
+
+  .panel-day-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .panel-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .panel-focus {
+    color: var(--muted);
+    font-size: 0.9rem;
+    max-width: 65ch;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  /* Section headings */
+  .section-heading {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    margin-top: 36px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Objectives */
+  .objectives {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .objectives li {
+    display: flex;
+    gap: 10px;
+    font-size: 0.875rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .objectives li::before {
+    content: '';
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    margin-top: 7px;
+  }
+
+  /* Files to read */
+  .file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .file-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+
+  .file-path {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--gold);
+    margin-bottom: 6px;
+    word-break: break-all;
+  }
+
+  .file-notes {
+    font-size: 0.83rem;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 65ch;
+  }
+
+  /* Concepts */
+  .concepts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .concept-tag {
+    display: inline-flex;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 10px;
+    width: fit-content;
+  }
+
+  /* Hands-on task */
+  .hands-on {
+    background: var(--surface);
+    border-left: 3px solid var(--gold);
+    padding: 16px 18px;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    max-width: 65ch;
+    color: var(--text);
+  }
+
+  /* ─── QUIZ ──────────────────────────────────────── */
+  .quiz { display: flex; flex-direction: column; gap: 24px; }
+
+  .quiz-q {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 18px 20px;
+  }
+
+  .q-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.55;
+    max-width: 65ch;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+
+  .q-num {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 7px; }
+
+  .opt-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.85rem;
+    padding: 10px 14px;
+    text-align: left;
+    cursor: pointer;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  .opt-btn:hover:not(:disabled) { border-color: var(--muted); }
+  .opt-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .opt-btn.correct {
+    border-color: var(--teal);
+    color: var(--teal);
+    background: rgba(79,138,123,0.08);
+  }
+
+  .opt-btn.wrong {
+    border-color: var(--error);
+    color: var(--error);
+    background: rgba(193,91,74,0.08);
+  }
+
+  .opt-btn:disabled { cursor: default; }
+
+  .explanation {
+    display: none;
+    margin-top: 12px;
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+    padding: 10px 12px;
+    border-left: 2px solid var(--border);
+    max-width: 60ch;
+  }
+
+  .explanation.visible { display: block; }
+  .explanation.correct-exp { border-color: var(--teal); }
+  .explanation.wrong-exp   { border-color: var(--error); }
+
+  /* Mark complete button */
+  .complete-row {
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-complete {
+    background: var(--gold);
+    color: var(--bg);
+    border: none;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 10px 24px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  .btn-complete:hover { background: #d99a4a; }
+  .btn-complete:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+  .btn-complete:disabled { opacity: 0.4; cursor: default; }
+
+  .done-badge {
+    font-size: 0.8rem;
+    color: var(--teal);
+    display: none;
+  }
+  .done-badge.visible { display: block; }
+
+  /* ─── BEGINNER CALLOUT ──────────────────────────── */
+  .simple-callout {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: rgba(79,138,123,0.07);
+    border-left: 2px solid rgba(79,138,123,0.4);
+    border-radius: 0 3px 3px 0;
+    padding: 9px 12px;
+    margin-top: 8px;
+    margin-left: 16px;
+  }
+
+  .callout-icon {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    opacity: 0.8;
+  }
+
+  .callout-text {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .callout-label {
+    font-weight: 600;
+    color: var(--teal);
+    margin-right: 4px;
+  }
+
+  /* ─── ARCHITECTURE PANEL ────────────────────────── */
+  .arch-panel { display: none; max-width: 900px; }
+  .arch-panel.visible { display: block; }
+
+  .arch-panel h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+
+  .arch-summary {
+    color: var(--muted);
+    font-size: 0.875rem;
+    max-width: 65ch;
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  .arch-summary p + p { margin-top: 12px; }
+
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .tech-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+  }
+
+  .tech-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--gold);
+    margin-bottom: 3px;
+  }
+
+  .tech-role {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .mermaid-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    overflow-x: auto;
+  }
+
+  /* Mermaid override for dark bg */
+  .mermaid svg {
+    background: transparent !important;
+  }
+
+  /* Hot files table */
+  .hot-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+  }
+
+  .hot-table th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .hot-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .hot-table tr:last-child td { border-bottom: none; }
+
+  .hot-table td:first-child {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+    white-space: nowrap;
+    padding-right: 20px;
+    width: 1%;
+  }
+
+  .hot-table .rank-cell {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    width: 30px;
+  }
+
+  .commit-badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 2px;
+    background: rgba(201,138,59,0.12);
+    color: var(--gold);
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+
+  /* ─── WELCOME / LOADING ─────────────────────────── */
+  .welcome {
+    max-width: 560px;
+    padding: 20px 0;
+  }
+
+  .welcome h2 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    margin-bottom: 10px;
+  }
+
+  .welcome p {
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.7;
+    max-width: 55ch;
+  }
+
+  .loading-msg {
+    color: var(--muted);
+    font-size: 0.875rem;
+    padding: 60px 0;
+  }
+
+  /* ─── RESPONSIVE ────────────────────────────────── */
+  @media (max-width: 768px) {
+    .shell {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    header { padding: 20px 20px 16px; }
+
+    .trail-col {
+      grid-row: 2;
+      height: auto;
+      position: static;
+      padding: 20px 20px 8px;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      overflow-y: visible;
+    }
+
+    .trail {
+      flex-direction: row;
+      align-items: flex-start;
+      padding-bottom: 0;
+    }
+
+    .trail::before {
+      left: 15px;
+      top: 14px;
+      width: calc(100% - 30px);
+      height: var(--trail-w);
+      bottom: auto;
+    }
+
+    .trail-fill {
+      left: 15px;
+      top: 14px;
+      width: 0%;
+      height: var(--trail-w) !important;
+      transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .trail-fill.mobile { height: var(--trail-w) !important; }
+
+    .waypoint {
+      flex-direction: column;
+      align-items: center;
+      padding: 0 12px 16px 0;
+      gap: 6px;
+      min-width: 80px;
+    }
+
+    .waypoint-label { text-align: center; }
+
+    .wp-title { max-width: 80px; font-size: 0.75rem; }
+
+    .arch-link { display: none; }
+
+    .content-col { grid-row: 3; padding: 24px 20px 60px; }
+
+    .panel-title { font-size: 1.3rem; }
+  }
+
+  /* ─── SCROLLBAR ─────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+
+  <header>
+    <div class="header-left">
+      <h1>Developer Onboarding Buddy</h1>
+      <p class="tagline">node-express-realworld-example-app — Conduit API</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div class="progress-pill" id="progress-pill">
+        <strong id="days-done">0</strong> of 5 days complete
+      </div>
+      <div class="level-toggle" id="level-toggle">
+        <!-- filled by JS -->
+      </div>
+    </div>
+  </header>
+
+  <!-- Trail sidebar -->
+  <nav class="trail-col" aria-label="Learning trail">
+    <div class="trail" id="trail">
+      <div class="trail-fill" id="trail-fill"></div>
+      <!-- waypoints injected by JS -->
+    </div>
+    <div class="arch-link">
+      <button id="arch-btn" aria-controls="arch-panel" aria-expanded="false">
+        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="1" y="3" width="14" height="10" rx="1"/>
+          <path d="M5 7h6M5 9.5h4"/>
+        </svg>
+        Architecture overview
+      </button>
+    </div>
+  </nav>
+
+  <!-- Content area -->
+  <main class="content-col" id="content-col">
+    <div class="loading-msg" id="loading-msg">Loading onboarding data…</div>
+
+    <!-- Day panels inserted by JS -->
+
+    <!-- Architecture panel -->
+    <div class="arch-panel" id="arch-panel" role="region" aria-label="Architecture overview">
+      <p class="panel-day-label">Codebase Overview</p>
+      <h2>Architecture</h2>
+      <div class="arch-summary" id="arch-summary"></div>
+
+      <div class="section-heading">Tech Stack</div>
+      <div class="tech-grid" id="tech-grid"></div>
+
+      <div class="section-heading" style="margin-top:36px">Data Flow Diagram</div>
+      <div class="mermaid-wrap">
+        <div class="mermaid" id="mermaid-diagram"></div>
+      </div>
+
+      <div class="section-heading">Hot Files — Top 10</div>
+      <table class="hot-table" id="hot-table">
+        <thead>
+          <tr>
+            <th class="rank-cell">#</th>
+            <th>File</th>
+            <th>Why important</th>
+          </tr>
+        </thead>
+        <tbody id="hot-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+</div>
+
+<script>
+// ─── Level from URL ───────────────────────────────────
+function getLevelFromURL() {
+  const p = new URLSearchParams(window.location.search).get('level');
+  return (p === 'experienced') ? 'experienced' : 'beginner';
+}
+
+function setLevel(newLevel) {
+  state.level = newLevel;
+  // Update URL without reload
+  const url = new URL(window.location.href);
+  url.searchParams.set('level', newLevel);
+  window.history.replaceState({}, '', url);
+  // Re-render day panels with new level content
+  rebuildDayPanels();
+  // Update toggle UI
+  renderLevelToggle();
+  // Re-open current panel
+  if (state.activePanel && state.activePanel.startsWith('day-')) {
+    openDay(parseInt(state.activePanel.split('-')[1]));
+  }
+}
+
+// ─── State ────────────────────────────────────────────
+const state = {
+  completedDays: new Set(),
+  activePanel: null,   // 'day-N' | 'arch'
+  data: null,
+  level: getLevelFromURL(),  // 'beginner' | 'experienced'
+};
+
+// ─── Boot ─────────────────────────────────────────────
+async function boot() {
+  try {
+    const [arch, hot, adaptive] = await Promise.all([
+      fetchJSON('../subagent-outputs/architecture.json'),
+      fetchJSON('../subagent-outputs/hot-files.json'),
+      fetchJSON('../subagent-outputs/learning-path-adaptive.json'),
+    ]);
+    state.data = { arch, hot, adaptive };
+    document.getElementById('loading-msg').remove();
+    buildTrail(adaptive);
+    buildDayPanels(adaptive);
+    buildArchPanel(arch, hot);
+    renderLevelToggle();
+    openDay(1);
+  } catch (e) {
+    document.getElementById('loading-msg').textContent =
+      'Could not load JSON files. Open this page via a local server (see instructions).';
+    console.error(e);
+  }
+}
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  return r.json();
+}
+
+// ─── Level toggle UI ──────────────────────────────────
+function renderLevelToggle() {
+  const container = document.getElementById('level-toggle');
+  const other = state.level === 'beginner' ? 'experienced' : 'beginner';
+  const otherLabel = other === 'beginner' ? 'Switch to beginner view' : 'Switch to experienced view';
+  container.innerHTML = `
+    <button class="level-switch-btn" onclick="setLevel('${other}')" aria-label="${otherLabel}">
+      ${otherLabel}
+    </button>`;
+}
+
+// ─── Trail ────────────────────────────────────────────
+function buildTrail(days) {
+  const trail = document.getElementById('trail');
+  // Remove any existing waypoints (all elements after trail-fill)
+  const fill = document.getElementById('trail-fill');
+  while (trail.lastChild && trail.lastChild !== fill) {
+    trail.removeChild(trail.lastChild);
+  }
+
+  days.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'waypoint locked';
+    btn.id = `wp-${d.day}`;
+    btn.setAttribute('aria-label', `Day ${d.day}: ${d.title}`);
+    btn.setAttribute('aria-pressed', 'false');
+    btn.innerHTML = `
+      <span class="marker" aria-hidden="true">${d.day}</span>
+      <span class="waypoint-label">
+        <span class="wp-day">Day ${d.day}</span>
+        <span class="wp-title">${d.title}</span>
+      </span>`;
+    btn.addEventListener('click', () => openDay(d.day));
+    trail.appendChild(btn);
+  });
+
+  // Unlock day 1 immediately
+  document.getElementById('wp-1').classList.remove('locked');
+  document.getElementById('wp-1').classList.add('active');
+}
+
+function updateTrail() {
+  const days = state.data.adaptive;
+  const done = state.completedDays;
+
+  days.forEach(d => {
+    const wp = document.getElementById(`wp-${d.day}`);
+    const prevDone = d.day === 1 || done.has(d.day - 1);
+    wp.classList.remove('done', 'active', 'locked');
+
+    if (done.has(d.day)) {
+      wp.classList.add('done');
+      wp.setAttribute('aria-pressed', 'true');
+    } else if (prevDone) {
+      if (state.activePanel === `day-${d.day}`) {
+        wp.classList.add('active');
+      }
+    } else {
+      wp.classList.add('locked');
+    }
+  });
+
+  if (state.activePanel && state.activePanel.startsWith('day-')) {
+    const dayNum = parseInt(state.activePanel.split('-')[1]);
+    const wp = document.getElementById(`wp-${dayNum}`);
+    if (wp && !wp.classList.contains('done')) {
+      wp.classList.add('active');
+    }
+  }
+
+  updateTrailFill();
+  updateProgressPill();
+}
+
+function updateTrailFill() {
+  const fill = document.getElementById('trail-fill');
+  const done = state.completedDays.size;
+  const total = state.data.adaptive.length;
+  const pct = total > 0 ? (done / total) * 100 : 0;
+
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    fill.style.width = pct + '%';
+    fill.style.height = '';
+  } else {
+    fill.style.height = pct + '%';
+    fill.style.width = '';
+  }
+}
+
+function updateProgressPill() {
+  document.getElementById('days-done').textContent = state.completedDays.size;
+}
+
+// ─── Day panels ───────────────────────────────────────
+// ─── Beginner callout data ────────────────────────────
+// Keyed as OBJECTIVE_CALLOUTS[day][objectiveIndex]
+//      FILE_CALLOUTS[day][filePath]
+const OBJECTIVE_CALLOUTS = {
+  1: [
+    "This app is a blogging website (think a simpler Medium), and there's an agreed-upon rulebook that says exactly what web addresses it must respond to.",
+    "You'll find the exact commands to turn the server on and off — like finding the power button on a new appliance.",
+    "The app is built like a relay race: a request enters, gets handed off through a series of steps, and comes back as a response.",
+    "Every folder has a job — like rooms in a house — and today you're just learning which room is which.",
+    "The project was rewritten in a newer style, but the old version is still visible in the history — like seeing a renovated house with the original blueprints still in the drawer."
+  ],
+  2: [
+    "A 'model' is just a description of what information gets saved — like a form template saying 'name goes here, email goes here'.",
+    "An article can have many tags, and a tag can belong to many articles — the database keeps a separate list to track all those connections.",
+    "A user can follow other users — the app keeps a special list inside the user's own record that says who they follow and who follows them.",
+    "Running this command is like telling the database 'here's the updated blueprint — please rebuild your filing cabinets to match'.",
+    "The seed script fills the database with pretend data so you can test things without creating real accounts manually."
+  ],
+  3: [
+    "When you sign up, the app scrambles your password so even the developers can't read it, then gives you a digital wristband to prove who you are.",
+    "Logging in checks your scrambled password without ever unscrambling it — like a lock that recognises your key without keeping a copy of it.",
+    "Some pages need you to be logged in; others work for anyone. This file decides which is which, by checking your wristband.",
+    "Your wristband (the login token) contains just your ID and an expiry date — not your password or personal details.",
+    "If your wristband is missing or fake, the app automatically turns you away at the door before you even reach the page."
+  ],
+  4: [
+    "This file does all the heavy lifting for articles — searching, saving, liking, and commenting — it's the engine room of the whole app.",
+    "A 'mapper' is a translator: it takes raw database rows and converts them into the tidy format the app sends back to you.",
+    "When you filter articles by tag or author, the app builds a custom search question on the fly, like filling in a search form based on what you asked for.",
+    "A slug is the readable part of a URL (like 'my-first-post'); the app generates it from the title and must make sure no two articles share the same one.",
+    "Your personal feed only shows articles from people you follow — the app adds an extra filter saying 'only show posts by my friends'."
+  ],
+  5: [
+    "Following someone updates a special list inside your account record, like adding a name to a contacts list that lives inside your own profile.",
+    "Two different parts of the app both need to check 'does user A follow user B?' — rather than merging them, each area keeps its own copy of that check.",
+    "The tags service just asks the database for the full list of tags and sends it back — no login needed, no filtering, as simple as it gets.",
+    "Tests are small programs that check your code works correctly — like a checklist a pilot runs before take-off.",
+    "The CI pipeline is an automatic robot that runs all the tests every time someone saves new code, so mistakes get caught before they reach users."
+  ]
+};
+
+const FILE_CALLOUTS = {
+  1: {
+    "README.md":                   "This is the 'welcome packet' — the first thing to read when you join a project, telling you how to set it up and what it does.",
+    "package.json":                "This file lists every tool the project depends on and the shortcut commands you can type to do common tasks.",
+    "src/main.ts":                 "This is the front door of the app — it sets up everything before any visitor (web request) is let in.",
+    "src/app/routes/routes.ts":    "Think of this as the building's directory — it says which corridor leads to which department.",
+    "app.js":                      "This is the old front door before the building was renovated — comparing it to the new one shows you what changed and why."
+  },
+  2: {
+    "src/prisma/schema.prisma":    "This file is the blueprint for the database — it describes every table and what columns each one has.",
+    "src/prisma/prisma-client.ts": "This file makes sure the app only opens one connection to the database at a time, like one phone line into the office.",
+    "src/prisma/seed.ts":          "This script fills the database with example data so you have something to look at while learning.",
+    "models/Article.js":           "This is how the old version stored article data — comparing it to the new schema shows how the storage approach improved.",
+    "models/User.js":              "This is the old version's user record — it used to store the login logic here; now that logic has moved to its own separate file."
+  },
+  3: {
+    "src/app/routes/auth/auth.ts":             "This is the bouncer at the door — it checks whether you have a valid wristband (login token) before letting you through.",
+    "src/app/routes/auth/auth.service.ts":     "This file handles signing up, logging in, and updating your account — all the identity-related actions in one place.",
+    "src/app/routes/auth/auth.controller.ts":  "This file lists all the login-related web addresses (/register, /login, etc.) and what should happen when you visit each one.",
+    "src/app/models/http-exception.model.ts":  "This is a reusable 'error card' the app fills out and throws when something goes wrong — so errors are always in a consistent format.",
+    "models/User.js":                          "The old user file kept login logic mixed in with data storage — now those two concerns live in separate files."
+  },
+  4: {
+    "src/app/routes/article/article.service.ts":    "This is the busiest file in the codebase — it handles everything to do with articles: creating, searching, liking, and commenting.",
+    "src/app/routes/article/article.mapper.ts":     "This file shapes the raw database result into the tidy package that gets sent back to the user — like a gift-wrapper for data.",
+    "src/app/routes/article/author.mapper.ts":      "This smaller wrapper specifically formats the author information inside an article response.",
+    "src/app/routes/article/article.controller.ts": "This file defines all the article-related web addresses and decides which service function to call for each one.",
+    "routes/api/articles.js":                       "This is the old articles code — reading it alongside the new version shows how the app was improved and reorganised."
+  },
+  5: {
+    "src/app/routes/profile/profile.service.ts": "This file handles following and unfollowing — it updates your 'people I follow' list inside the database.",
+    "src/app/routes/profile/profile.utils.ts":   "This is a small helper that formats a user's profile for the response — it duplicates a check from another file on purpose, to keep things simple.",
+    "src/app/routes/tag/tag.service.ts":          "The simplest file in the project: just ask the database for all tags, and send them back. Nothing else.",
+    ".circleci/config.yml":                       "This file tells an automated robot what steps to run every time someone saves code — like a checklist that runs itself.",
+    "src/app/routes/article/article.service.ts":  "You're re-reading the busiest file today, this time focusing on the comment-related functions to see how they check permissions."
+  }
+};
+
+function simpleCallout(text) {
+  return `<div class="simple-callout" role="note">
+    <span class="callout-icon" aria-hidden="true">💡</span>
+    <span class="callout-text"><span class="callout-label">In simple words:</span>${text}</span>
+  </div>`;
+}
+
+function buildDayPanels(days) {
+  const col = document.getElementById('content-col');
+  // Remove any existing day panels
+  col.querySelectorAll('.day-panel').forEach(el => el.remove());
+
+  days.forEach(d => {
+    const lv = state.level;
+    const lvData = d[lv];
+    const quiz = lvData.quiz;
+    const isBeginner = lv === 'beginner';
+
+    const objCallouts = isBeginner ? (OBJECTIVE_CALLOUTS[d.day] || []) : [];
+    const fileCallouts = isBeginner ? (FILE_CALLOUTS[d.day] || {}) : {};
+
+    const panel = document.createElement('div');
+    panel.className = 'day-panel';
+    panel.id = `day-${d.day}`;
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-label', `Day ${d.day}: ${d.title}`);
+
+    const objectivesHtml = d.objectives.map((o, i) => {
+      const callout = objCallouts[i] ? simpleCallout(objCallouts[i]) : '';
+      return `<li>${o}${callout}</li>`;
+    }).join('');
+
+    const filesHtml = d.files_to_read.map(f => {
+      const callout = fileCallouts[f.path] ? simpleCallout(fileCallouts[f.path]) : '';
+      return `<div class="file-card">
+        <div class="file-path">${f.path}</div>
+        <div class="file-notes">${f.reading_notes}</div>
+        ${callout}
+      </div>`;
+    }).join('');
+
+    panel.innerHTML = `
+      <p class="panel-day-label">Day ${d.day} of 5</p>
+      <h2 class="panel-title">${d.title}</h2>
+      <p class="panel-focus">${lvData.description}</p>
+
+      <div class="section-heading">Learning Objectives</div>
+      <ul class="objectives">
+        ${objectivesHtml}
+      </ul>
+
+      <div class="section-heading">Files to Read</div>
+      <div class="file-list">
+        ${filesHtml}
+      </div>
+
+      <div class="section-heading">Key Concepts</div>
+      <div class="concepts-grid">
+        ${d.concepts.map(c => `<span class="concept-tag">${c}</span>`).join('')}
+      </div>
+
+      <div class="section-heading">Hands-on Task</div>
+      <div class="hands-on">${d.hands_on_task}</div>
+
+      <div class="section-heading">Quiz — ${quiz.length} Questions</div>
+      <div class="quiz" id="quiz-${d.day}">
+        ${quiz.map((q, i) => buildQuestion(d.day, i, q)).join('')}
+      </div>
+
+      <div class="complete-row">
+        <button class="btn-complete" id="btn-complete-${d.day}" onclick="markComplete(${d.day})">
+          Mark Day ${d.day} Complete
+        </button>
+        <span class="done-badge" id="done-badge-${d.day}">Day ${d.day} complete</span>
+      </div>
+    `;
+
+    col.appendChild(panel);
+  });
+
+  // Re-apply completed state to buttons
+  state.completedDays.forEach(dayNum => {
+    const btn = document.getElementById(`btn-complete-${dayNum}`);
+    if (btn) btn.disabled = true;
+    const badge = document.getElementById(`done-badge-${dayNum}`);
+    if (badge) badge.classList.add('visible');
+  });
+}
+
+function rebuildDayPanels() {
+  if (!state.data) return;
+  buildDayPanels(state.data.adaptive);
+}
+
+function buildQuestion(dayNum, idx, q) {
+  const qid = `d${dayNum}q${idx}`;
+  const opts = q.options.map(opt => {
+    const letter = opt.charAt(0);
+    return `<button class="opt-btn"
+              data-qid="${qid}"
+              data-letter="${letter}"
+              data-correct="${q.answer}"
+              onclick="answerQuestion(this)">${opt}</button>`;
+  }).join('');
+
+  return `
+    <div class="quiz-q" id="${qid}">
+      <div class="q-num">Q${idx + 1}</div>
+      <div class="q-text">${q.question}</div>
+      <div class="options">${opts}</div>
+      <div class="explanation" id="exp-${qid}">${q.explanation}</div>
+    </div>`;
+}
+
+function answerQuestion(btn) {
+  const qid = btn.dataset.qid;
+  const container = document.getElementById(qid);
+  const allBtns = container.querySelectorAll('.opt-btn');
+  const exp = document.getElementById(`exp-${qid}`);
+
+  allBtns.forEach(b => { b.disabled = true; });
+
+  const correct = btn.dataset.correct;
+  const chosen = btn.dataset.letter;
+
+  allBtns.forEach(b => {
+    if (b.dataset.letter === correct) b.classList.add('correct');
+  });
+
+  if (chosen !== correct) {
+    btn.classList.add('wrong');
+    exp.classList.add('wrong-exp');
+  } else {
+    exp.classList.add('correct-exp');
+  }
+
+  exp.classList.add('visible');
+}
+
+function markComplete(dayNum) {
+  if (state.completedDays.has(dayNum)) return;
+
+  const wp = document.getElementById(`wp-${dayNum}`);
+  const marker = wp.querySelector('.marker');
+  marker.style.transform = 'scale(1.3)';
+  setTimeout(() => { marker.style.transform = ''; }, 300);
+
+  state.completedDays.add(dayNum);
+  updateTrail();
+
+  const btn = document.getElementById(`btn-complete-${dayNum}`);
+  btn.disabled = true;
+  document.getElementById(`done-badge-${dayNum}`).classList.add('visible');
+
+  const next = dayNum + 1;
+  if (next <= state.data.adaptive.length) {
+    setTimeout(() => openDay(next), 480);
+  }
+}
+
+// ─── Architecture panel ───────────────────────────────
+function buildArchPanel(arch, hot) {
+  const summaryEl = document.getElementById('arch-summary');
+  arch.summary.split('\n\n').forEach(para => {
+    const p = document.createElement('p');
+    p.textContent = para;
+    summaryEl.appendChild(p);
+  });
+
+  const grid = document.getElementById('tech-grid');
+  arch.tech_stack.forEach(t => {
+    grid.innerHTML += `
+      <div class="tech-item">
+        <div class="tech-name">${t.name}</div>
+        <div class="tech-role">${t.role}</div>
+      </div>`;
+  });
+
+  const mEl = document.getElementById('mermaid-diagram');
+  mEl.textContent = arch.mermaid_diagram;
+
+  const tbody = document.getElementById('hot-tbody');
+  hot.hot_files.forEach(f => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="rank-cell">${f.rank}</td>
+      <td>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--gold)">
+          ${f.path}
+        </span>
+        <span class="commit-badge">${f.commit_count} commits</span>
+      </td>
+      <td style="color:var(--muted);font-size:0.82rem;max-width:320px">${f.why_important}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('arch-btn').addEventListener('click', openArch);
+}
+
+// ─── Navigation ───────────────────────────────────────
+function openDay(num) {
+  closeAll();
+  state.activePanel = `day-${num}`;
+
+  const panel = document.getElementById(`day-${num}`);
+  if (panel) panel.classList.add('visible');
+
+  updateTrail();
+  scrollToTop();
+}
+
+function openArch() {
+  closeAll();
+  state.activePanel = 'arch';
+
+  const panel = document.getElementById('arch-panel');
+  panel.classList.add('visible');
+
+  if (!panel.dataset.rendered) {
+    mermaid.run({ nodes: [document.getElementById('mermaid-diagram')] });
+    panel.dataset.rendered = '1';
+  }
+
+  document.getElementById('arch-btn').setAttribute('aria-expanded', 'true');
+  updateTrail();
+  scrollToTop();
+}
+
+function closeAll() {
+  document.querySelectorAll('.day-panel.visible, .arch-panel.visible').forEach(el => {
+    el.classList.remove('visible');
+  });
+  document.getElementById('arch-btn').setAttribute('aria-expanded', 'false');
+}
+
+function scrollToTop() {
+  document.getElementById('content-col').scrollTo({ top: 0 });
+}
+
+// ─── Mermaid config ───────────────────────────────────
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    background: '#1C2028',
+    primaryColor: '#1C2028',
+    primaryTextColor: '#E8E6DF',
+    primaryBorderColor: '#272C35',
+    lineColor:  '#C98A3B',
+    secondaryColor: '#14171C',
+    tertiaryColor: '#14171C',
+    edgeLabelBackground: '#1C2028',
+    fontSize: '13px',
+  },
+  flowchart: { curve: 'basis' },
+});
+
+// ─── Responsive trail fill ────────────────────────────
+window.addEventListener('resize', () => {
+  if (state.data) updateTrailFill();
+});
+
+// ─── Go ───────────────────────────────────────────────
+boot();
+</script>
+</body>
+</html>

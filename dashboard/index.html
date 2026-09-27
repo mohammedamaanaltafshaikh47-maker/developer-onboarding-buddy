@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Developer Onboarding Buddy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #14171C;
+  --surface: #1C2028;
+  --gold:    #C98A3B;
+  --teal:    #4F8A7B;
+  --text:    #E8E6DF;
+  --muted:   #8B9099;
+  --border:  #272C35;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NAVBAR ─────────────────────────────────────────── */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(20,23,28,0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(39,44,53,0.6);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  gap: 24px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.nav-wordmark {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.82rem;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.nav-links a:hover { color: var(--text); }
+.nav-links a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 3px; }
+
+.nav-cta {
+  background: var(--gold);
+  color: var(--bg) !important;
+  font-weight: 600 !important;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  font-size: 0.78rem !important;
+  transition: background 0.15s !important;
+}
+
+.nav-cta:hover { background: #d99a4a !important; color: var(--bg) !important; }
+
+/* ── HERO ───────────────────────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px 48px 180px;
+  overflow: hidden;
+}
+
+/* SVG node-graph background */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Hero content */
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+}
+
+.hero-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+  margin-bottom: 20px;
+  opacity: 0.85;
+}
+
+.hero-headline {
+  font-size: clamp(42px, 8vw, 110px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.0;
+  color: var(--text);
+  margin-bottom: 32px;
+  max-width: 16ch;
+}
+
+.hero-headline em {
+  font-style: normal;
+  color: var(--gold);
+}
+
+.hero-sub {
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  color: var(--muted);
+  line-height: 1.75;
+  max-width: 52ch;
+  margin-bottom: 48px;
+}
+
+/* Floating stat card */
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 24px 28px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.stat-card:hover {
+  box-shadow: 0 14px 44px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.35);
+  transform: translateY(-3px);
+}
+
+.stat-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.stat-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+}
+
+.btn-cta {
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: 3px;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  width: 100%;
+  text-align: center;
+  transition: background 0.15s;
+}
+
+.btn-cta:hover { background: #d99a4a; }
+.btn-cta:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+
+/* Circular badge */
+.hero-badge {
+  position: absolute;
+  bottom: 200px;
+  right: 64px;
+  z-index: 3;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 1px solid rgba(201,138,59,0.35);
+  background: rgba(20,23,28,0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.badge-top {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.55rem;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badge-main {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* ── TORN EDGE ──────────────────────────────────────── */
+.torn-edge {
+  position: relative;
+  height: 0;
+  z-index: 3;
+  margin-top: -2px;
+}
+
+.torn-edge svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+/* ── FEATURES SECTION ───────────────────────────────── */
+.features {
+  background: var(--surface);
+  position: relative;
+  padding: 80px 48px 100px;
+  overflow: hidden;
+}
+
+.features-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(120px, 22vw, 280px);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  color: var(--text);
+  opacity: 0.045;
+  pointer-events: none;
+  white-space: nowrap;
+  user-select: none;
+  z-index: 0;
+}
+
+.features-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.features-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 48px;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.step {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.step:last-child { border-bottom: none; }
+
+.step-num {
+  flex-shrink: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--gold);
+  width: 36px;
+  padding-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.step-content strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.015em;
+  margin-bottom: 6px;
+}
+
+.step-content span {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.65;
+  max-width: 55ch;
+  display: block;
+}
+
+/* ── LEVEL + CTA SECTION ────────────────────────────── */
+.onboard-section {
+  background: var(--bg);
+  padding: 80px 48px 100px;
+}
+
+.onboard-inner {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.onboard-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.onboard-sub {
+  font-size: 0.88rem;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 36px;
+  max-width: 44ch;
+  line-height: 1.6;
+}
+
+.level-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 14px;
+  text-align: center;
+  width: 100%;
+}
+
+.level-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.level-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 20px;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+
+.level-card:hover { border-color: var(--muted); }
+.level-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.level-card.selected {
+  border-color: var(--gold);
+  background: rgba(201,138,59,0.07);
+}
+
+.level-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.level-card.selected .level-card-title { color: var(--gold); }
+
+.level-card-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.onboard-cta-wrap {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-cta-lg {
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 13px 36px;
+  border-radius: 3px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.btn-cta-lg:hover { background: #d99a4a; }
+.btn-cta-lg:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+
+.demo-note {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.demo-note code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--gold);
+}
+
+/* ── FOOTER ─────────────────────────────────────────── */
+footer {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 20px 48px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .navbar { padding: 0 20px; gap: 12px; }
+  .nav-links a:not(.nav-cta) { display: none; }
+  .hero { padding: 100px 24px 160px; }
+  .hero-badge { bottom: 150px; right: 24px; width: 72px; height: 72px; }
+  .features { padding: 60px 24px 80px; }
+  .onboard-section { padding: 60px 24px 80px; }
+  footer { padding: 20px 24px; }
+}
+
+@media (max-width: 480px) {
+  .level-cards { grid-template-columns: 1fr; }
+  .stat-row { gap: 14px; }
+  .stat-divider { display: none; }
+}
+
+/* ── SCROLLBAR ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar" aria-label="Site navigation">
+  <a href="#" class="nav-logo" aria-label="Onboarding Buddy home">
+    <!-- Trail mark SVG: three circles connected by a curved path -->
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <circle cx="5" cy="22" r="3" fill="#C98A3B"/>
+      <circle cx="14" cy="10" r="3" fill="#C98A3B"/>
+      <circle cx="23" cy="20" r="3" fill="#C98A3B"/>
+      <path d="M5 22 Q9 8 14 10 Q18 12 23 20"
+            stroke="#C98A3B" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <span class="nav-wordmark">Onboarding Buddy</span>
+  </a>
+  <div class="nav-links" role="list">
+    <a href="#how-it-works" role="listitem">How it works</a>
+    <a href="#demo" role="listitem">Demo</a>
+    <a href="https://github.com/gothinkster/node-express-realworld-example-app" target="_blank" rel="noopener" role="listitem">GitHub</a>
+    <a href="#demo" class="nav-cta" role="listitem">Get Started</a>
+  </div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────── -->
+<section class="hero" aria-labelledby="hero-headline">
+
+  <!-- Abstract node-graph SVG background -->
+  <svg class="hero-bg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <radialGradient id="glow" cx="60%" cy="40%" r="55%">
+        <stop offset="0%" stop-color="#C98A3B" stop-opacity="0.06"/>
+        <stop offset="100%" stop-color="#14171C" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1440" height="900" fill="#14171C"/>
+    <rect width="1440" height="900" fill="url(#glow)"/>
+    <!-- Node edges -->
+    <g stroke="#272C35" stroke-width="1" fill="none" opacity="0.9">
+      <line x1="80"  y1="120" x2="260" y2="200"/>
+      <line x1="260" y1="200" x2="430" y2="130"/>
+      <line x1="430" y1="130" x2="600" y2="250"/>
+      <line x1="600" y1="250" x2="780" y2="180"/>
+      <line x1="780" y1="180" x2="950" y2="290"/>
+      <line x1="950" y1="290" x2="1100" y2="200"/>
+      <line x1="1100" y1="200" x2="1300" y2="270"/>
+      <line x1="260" y1="200" x2="350" y2="380"/>
+      <line x1="430" y1="130" x2="520" y2="340"/>
+      <line x1="600" y1="250" x2="680" y2="420"/>
+      <line x1="780" y1="180" x2="860" y2="400"/>
+      <line x1="950" y1="290" x2="1020" y2="460"/>
+      <line x1="1100" y1="200" x2="1180" y2="420"/>
+      <line x1="80"  y1="120" x2="160" y2="340"/>
+      <line x1="160" y1="340" x2="350" y2="380"/>
+      <line x1="350" y1="380" x2="520" y2="340"/>
+      <line x1="520" y1="340" x2="680" y2="420"/>
+      <line x1="680" y1="420" x2="860" y2="400"/>
+      <line x1="860" y1="400" x2="1020" y2="460"/>
+      <line x1="1020" y1="460" x2="1180" y2="420"/>
+      <line x1="1180" y1="420" x2="1360" y2="490"/>
+      <line x1="160" y1="340" x2="240" y2="560"/>
+      <line x1="350" y1="380" x2="450" y2="580"/>
+      <line x1="520" y1="340" x2="600" y2="550"/>
+      <line x1="680" y1="420" x2="750" y2="610"/>
+      <line x1="860" y1="400" x2="940" y2="600"/>
+      <line x1="1020" y1="460" x2="1100" y2="640"/>
+      <line x1="1180" y1="420" x2="1250" y2="640"/>
+      <!-- Gold accent edges -->
+      <line x1="260" y1="200" x2="600" y2="250" stroke="#C98A3B" stroke-opacity="0.18"/>
+      <line x1="780" y1="180" x2="1100" y2="200" stroke="#C98A3B" stroke-opacity="0.18"/>
+      <line x1="520" y1="340" x2="860" y2="400" stroke="#C98A3B" stroke-opacity="0.12"/>
+    </g>
+    <!-- Nodes -->
+    <g fill="#272C35">
+      <circle cx="80"   cy="120" r="4"/>
+      <circle cx="260"  cy="200" r="5"/>
+      <circle cx="430"  cy="130" r="4"/>
+      <circle cx="600"  cy="250" r="6"/>
+      <circle cx="780"  cy="180" r="4"/>
+      <circle cx="950"  cy="290" r="5"/>
+      <circle cx="1100" cy="200" r="4"/>
+      <circle cx="1300" cy="270" r="3"/>
+      <circle cx="160"  cy="340" r="4"/>
+      <circle cx="350"  cy="380" r="5"/>
+      <circle cx="520"  cy="340" r="4"/>
+      <circle cx="680"  cy="420" r="5"/>
+      <circle cx="860"  cy="400" r="4"/>
+      <circle cx="1020" cy="460" r="5"/>
+      <circle cx="1180" cy="420" r="3"/>
+      <circle cx="1360" cy="490" r="3"/>
+      <circle cx="240"  cy="560" r="3"/>
+      <circle cx="450"  cy="580" r="4"/>
+      <circle cx="600"  cy="550" r="3"/>
+      <circle cx="750"  cy="610" r="4"/>
+      <circle cx="940"  cy="600" r="3"/>
+      <circle cx="1100" cy="640" r="4"/>
+      <circle cx="1250" cy="640" r="3"/>
+    </g>
+    <!-- Gold accent nodes -->
+    <g fill="#C98A3B" opacity="0.55">
+      <circle cx="260"  cy="200" r="3"/>
+      <circle cx="600"  cy="250" r="3.5"/>
+      <circle cx="950"  cy="290" r="3"/>
+      <circle cx="680"  cy="420" r="3"/>
+    </g>
+  </svg>
+
+  <div class="hero-inner">
+    <p class="hero-eyebrow" aria-hidden="true">// developer-onboarding-buddy</p>
+
+    <h1 class="hero-headline" id="hero-headline">
+      Turn any codebase into a <em>guided path</em>
+    </h1>
+
+    <p class="hero-sub">
+      New developers usually spend 2–4 weeks just figuring out how a codebase works. This tool reads the code, understands its structure and history, and automatically builds a day-by-day learning path — with diagrams, the most important files to read, and quizzes to check understanding.
+    </p>
+
+    <!-- Floating stat card -->
+    <div class="stat-card" id="demo">
+      <div class="stat-row">
+        <div class="stat-item">
+          <span class="stat-value">5</span>
+          <span class="stat-label">Day path</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-value">3</span>
+          <span class="stat-label">AI subagents</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-value">25</span>
+          <span class="stat-label">Quiz questions</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-value">2×</span>
+          <span class="stat-label">Skill levels</span>
+        </div>
+      </div>
+      <button class="btn-cta" id="btn-cta-hero">View the onboarding path</button>
+    </div>
+  </div>
+
+  <!-- Circular badge -->
+  <div class="hero-badge" aria-label="AI-Powered, Built with Bob">
+    <span class="badge-top">AI</span>
+    <span class="badge-main">Built<br>with Bob</span>
+  </div>
+
+</section>
+
+<!-- Torn edge -->
+<div class="torn-edge" aria-hidden="true">
+  <svg viewBox="0 0 1440 54" height="54" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,0 L0,20 L36,8 L72,28 L108,10 L144,32 L180,14 L216,36 L252,16 L288,38 L324,12 L360,34 L396,8 L432,30 L468,14 L504,36 L540,10 L576,32 L612,6 L648,28 L684,12 L720,40 L756,18 L792,36 L828,8 L864,30 L900,14 L936,38 L972,10 L1008,32 L1044,16 L1080,36 L1116,8 L1152,28 L1188,12 L1224,34 L1260,10 L1296,30 L1332,16 L1368,38 L1404,14 L1440,32 L1440,0 Z"
+          fill="#1C2028"/>
+  </svg>
+</div>
+
+<!-- ── HOW IT WORKS ──────────────────────────────────── -->
+<section class="features" id="how-it-works" aria-labelledby="features-heading">
+  <div class="features-watermark" aria-hidden="true">GUIDED</div>
+  <div class="features-inner">
+    <p class="features-label" id="features-heading">How it works</p>
+    <div class="steps">
+      <div class="step">
+        <span class="step-num" aria-hidden="true">01</span>
+        <div class="step-content">
+          <strong>Point it at any codebase</strong>
+          <span>It analyzes the project's file structure and commit history to understand which parts are most important and most frequently changed.</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num" aria-hidden="true">02</span>
+        <div class="step-content">
+          <strong>It builds a personalized path</strong>
+          <span>Architecture diagrams, key files ranked by importance, and a day-by-day plan tailored to how the codebase is actually structured.</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num" aria-hidden="true">03</span>
+        <div class="step-content">
+          <strong>The developer follows along</strong>
+          <span>Reading, exploring files, and short quizzes confirm real understanding — not just passive reading.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── LEVEL SELECTOR + CTA ─────────────────────────── -->
+<section class="onboard-section" aria-labelledby="onboard-heading">
+  <div class="onboard-inner">
+    <h2 class="onboard-heading" id="onboard-heading">Start your onboarding</h2>
+    <p class="onboard-sub">This demo shows the onboarding path generated for the Conduit API — a <code>Node.js/Express</code> real-world example app.</p>
+
+    <p class="level-label" id="level-label">How would you describe yourself?</p>
+    <div class="level-cards" role="group" aria-labelledby="level-label">
+      <button class="level-card selected" id="card-beginner" data-level="beginner" aria-pressed="true">
+        <div class="level-card-title">I'm new to this</div>
+        <div class="level-card-desc">Plain language and everyday analogies. No prior professional dev experience needed.</div>
+      </button>
+      <button class="level-card" id="card-experienced" data-level="experienced" aria-pressed="false">
+        <div class="level-card-title">I'm experienced</div>
+        <div class="level-card-desc">Precise technical language for someone who knows programming and just needs the codebase specifics.</div>
+      </button>
+    </div>
+
+    <div class="onboard-cta-wrap">
+      <button class="btn-cta-lg" id="btn-cta-main">View the onboarding path</button>
+      <p class="demo-note">A 5-day guided path — architecture diagrams, hot files, and adaptive quizzes.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Developer Onboarding Buddy — IBM Hackathon Demo
+</footer>
+
+<script>
+  // ── Level selector ──────────────────────────────────
+  const cards = document.querySelectorAll('.level-card');
+  let selectedLevel = 'beginner';
+
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => { c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
+      card.classList.add('selected');
+      card.setAttribute('aria-pressed', 'true');
+      selectedLevel = card.dataset.level;
+    });
+  });
+
+  function goToOnboarding() {
+    window.location.href = `onboarding.html?level=${selectedLevel}`;
+  }
+
+  document.getElementById('btn-cta-main').addEventListener('click', goToOnboarding);
+  document.getElementById('btn-cta-hero').addEventListener('click', () => {
+    document.getElementById('onboard-section') || document.querySelector('.onboard-section').scrollIntoView({ behavior: 'smooth' });
+    // scroll down to the selector
+    document.querySelector('.onboard-section').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+</body>
+</html>

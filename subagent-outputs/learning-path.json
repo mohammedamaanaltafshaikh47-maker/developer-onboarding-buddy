@@ -1,0 +1,506 @@
+{
+  "title": "Developer Onboarding: node-express-realworld-example-app",
+  "description": "A structured 5-day learning path through the Conduit RealWorld API — a production-grade TypeScript/Express/Prisma/PostgreSQL blogging platform. Each day builds on the last, moving from project setup and orientation through the data layer, security, core business logic, and finally profiles, tags, and the CI/test pipeline.",
+  "days": [
+    {
+      "day": 1,
+      "title": "Project Setup & Orientation",
+      "focus": "Understand what the project does, how to run it, and how every file relates to every other file before touching any business logic.",
+      "objectives": [
+        "Explain what the RealWorld / Conduit specification is and what API surface this server exposes",
+        "Successfully run the development server locally using the scripts in package.json",
+        "Describe the high-level layered architecture: entry point → router → controller → service → Prisma → PostgreSQL",
+        "Identify the role of every top-level directory (src/, prisma/, routes/, models/, .circleci/)",
+        "Explain why both a legacy JavaScript layer (app.js, routes/api/) and a modern TypeScript layer (src/) exist in the same repository"
+      ],
+      "files_to_read": [
+        {
+          "path": "README.md",
+          "reading_notes": "The single most-touched file in the entire git history (15 commits). Read every section: note the required environment variables (DATABASE_URL, JWT_SECRET), the npm scripts for running migrations and the dev server, and the API endpoint list. This file is your map for the rest of the week."
+        },
+        {
+          "path": "package.json",
+          "reading_notes": "Second most-touched file (10 commits). Identify: (1) the 'scripts' section — which script starts the dev server, which runs tests, which runs Prisma migrations; (2) the production dependencies vs devDependencies split; (3) the Node.js engine requirement. Notice that Nx is present — this project uses monorepo tooling even though it is a single app."
+        },
+        {
+          "path": "src/main.ts",
+          "reading_notes": "The modern entry point (3 commits). Trace the exact middleware registration order: CORS → body-parser JSON → body-parser URL-encoded → API router. Then read the three error-handler branches at the bottom: UnauthorizedError (401), HttpException (custom status), and the catch-all 500. Note that process.env.PORT is used with a fallback to 3000."
+        },
+        {
+          "path": "src/app/routes/routes.ts",
+          "reading_notes": "Central route aggregator. See how each feature domain (auth, articles, profiles, tags) is mounted as a sub-router under /api. This is the only file that wires together all four feature areas — understanding it tells you exactly which URL prefixes map to which controller files."
+        },
+        {
+          "path": "app.js",
+          "reading_notes": "Legacy JavaScript entry point (7 commits — one of the hottest files). Compare its middleware setup and error handling directly with src/main.ts. Notice what was added, removed, or restructured during the TypeScript migration. This historical context will reappear when you study the auth and article layers."
+        }
+      ],
+      "concepts": [
+        "RealWorld specification — a shared API contract that lets any frontend pair with any backend",
+        "Layered Express architecture: middleware → router → controller → service → ORM",
+        "Nx monorepo tooling and how project.json / nx.json affect available scripts",
+        "Environment variable configuration (DATABASE_URL, JWT_SECRET, PORT)",
+        "Repository migration strategy: legacy JS files coexisting with new TypeScript source during a staged rewrite"
+      ],
+      "quiz": [
+        {
+          "question": "According to src/main.ts, in what order are the three error-handling branches evaluated when an error reaches the global error handler?",
+          "options": [
+            "A) HttpException → UnauthorizedError → generic 500",
+            "B) UnauthorizedError → HttpException → generic 500",
+            "C) generic 500 → UnauthorizedError → HttpException",
+            "D) UnauthorizedError → generic 500 → HttpException"
+          ],
+          "answer": "B",
+          "explanation": "main.ts registers the UnauthorizedError handler first (checking err.name === 'UnauthorizedError' to return 401), then the HttpException handler (checking err instanceof HttpException), and finally falls through to the generic 500 catch-all. Order matters in Express error middleware."
+        },
+        {
+          "question": "README.md is the most-touched file in the repository with 15 commits. What does this primarily indicate about the project's history?",
+          "options": [
+            "A) The README was auto-generated on every commit by a CI script",
+            "B) Documentation was kept in sync with frequent setup, API, and configuration changes throughout the migration",
+            "C) The README contains generated TypeScript type definitions that change with each build",
+            "D) The README is the only file tracked by the legacy JavaScript layer"
+          ],
+          "answer": "B",
+          "explanation": "hot-files.json explicitly states the README 'contains setup instructions, environment configuration, and API documentation' and was updated to reflect ongoing changes. With 15 commits it tops the entire history — reflecting that docs were maintained alongside feature and migration work."
+        },
+        {
+          "question": "Which npm script would you run to apply a new Prisma migration to the development database?",
+          "options": [
+            "A) npm run dev",
+            "B) npm run seed",
+            "C) npm run migrate:dev",
+            "D) npm run prisma:push"
+          ],
+          "answer": "C",
+          "explanation": "package.json exposes a 'migrate:dev' script that wraps 'prisma migrate dev'. The 'dev' script starts the server, while 'seed' populates demo data. Always run migrations before seeding on a fresh database."
+        },
+        {
+          "question": "src/app/routes/routes.ts mounts all feature controllers under a single path prefix. What is that prefix?",
+          "options": [
+            "A) /v1",
+            "B) /conduit",
+            "C) /api",
+            "D) /rest"
+          ],
+          "answer": "C",
+          "explanation": "routes.ts is described in architecture.json as 'mounts all feature controllers under /api'. Every endpoint in the RealWorld spec is therefore reachable at /api/users, /api/articles, /api/profiles, and /api/tags."
+        },
+        {
+          "question": "Why does the repository contain both app.js / routes/api/articles.js and src/main.ts / src/app/routes/article/article.service.ts?",
+          "options": [
+            "A) app.js is the test harness and src/main.ts is production code",
+            "B) The project was migrated from a JavaScript/Mongoose stack to a TypeScript/Prisma/PostgreSQL stack; both generations coexist in git history",
+            "C) app.js handles REST endpoints while src/main.ts handles WebSocket connections",
+            "D) They are two separate microservices that share the same repository"
+          ],
+          "answer": "B",
+          "explanation": "architecture.json explicitly notes: 'The codebase was refactored from an older JavaScript/Mongoose version to a modern TypeScript/Prisma/PostgreSQL stack, and both the legacy JS files and the new TypeScript source coexist in the commit history.' hot-files.json confirms routes/api/articles.js had 9 commits and models/User.js had 7."
+        }
+      ],
+      "hands_on_task": "Clone the repository, copy .env.example to .env, fill in a local DATABASE_URL and a random JWT_SECRET string, run 'npm run migrate:dev' followed by 'npm run seed', then start the dev server with 'npm run dev'. Using curl or Postman, hit GET /api/tags and confirm you receive a JSON array of tag strings. Then open src/app/routes/routes.ts and draw (on paper or in a text file) the full URL → file mapping for all four feature domains."
+    },
+    {
+      "day": 2,
+      "title": "Data Layer & Schema",
+      "focus": "Understand every database model, its fields, and the relationships between models — this knowledge underpins every query you will read in the service layer.",
+      "objectives": [
+        "Read and explain every model in schema.prisma including all scalar fields and relation fields",
+        "Describe the implicit many-to-many relationship between Article and Tag and how Prisma manages the join table",
+        "Explain the two self-referential relations on User (follows/followedBy) and how the follow graph is stored",
+        "Trace what happens when 'npm run migrate:dev' is run: schema diff → SQL generation → migration file → database apply",
+        "Read the seed script and predict the exact state of the database after it runs"
+      ],
+      "files_to_read": [
+        {
+          "path": "src/prisma/schema.prisma",
+          "reading_notes": "The authoritative source of truth for the database. Read each model block carefully: User (note the two self-referential relation arrays 'follows' and 'followedBy'), Article (note the 'tagList' relation and the 'favoritedBy' relation), Comment (note the author and article foreign keys), Tag (note its relation to Article). Identify every field marked @unique and every @default."
+        },
+        {
+          "path": "src/prisma/prisma-client.ts",
+          "reading_notes": "Short but important: this file implements the Prisma singleton pattern using a global variable to prevent multiple PrismaClient instances during hot-reload in development. Understand why naive 'new PrismaClient()' at module scope would cause connection pool exhaustion during development."
+        },
+        {
+          "path": "src/prisma/seed.ts",
+          "reading_notes": "Read the seed script to understand the demo data shape: how many users, articles, tags, and follow relationships are created. Notice the use of 'upsert' (not 'create') — this makes the seed idempotent. Pay attention to how nested writes (creating an article with embedded tags) are expressed in Prisma syntax."
+        },
+        {
+          "path": "models/Article.js",
+          "reading_notes": "Legacy Mongoose Article model (6 commits). Compare its schema definition — especially slug generation, tags-as-array, and the favorites counter — with the Prisma schema. Notice what the relational model (Prisma) does differently: tags are now a proper relation table instead of a string array, and favorites are a join table instead of a denormalized count."
+        },
+        {
+          "path": "models/User.js",
+          "reading_notes": "Legacy Mongoose User model (7 commits). The JWT generation and bcrypt hashing that lived as methods on this Mongoose document model have been extracted into auth.service.ts in the modern codebase. Note this architectural shift: the model is now a pure data definition, and behavior lives in the service layer."
+        }
+      ],
+      "concepts": [
+        "Prisma schema syntax: model blocks, field types, @id, @unique, @default, @relation",
+        "One-to-many vs many-to-many relations in Prisma and how they translate to SQL foreign keys and join tables",
+        "Self-referential relations: modeling a follower graph on a single User table",
+        "Prisma migrations workflow: schema change → prisma migrate dev → SQL file in prisma/migrations/",
+        "Singleton pattern for database clients and why it matters in Node.js hot-reload environments",
+        "Idempotent seed scripts using upsert instead of create"
+      ],
+      "quiz": [
+        {
+          "question": "In schema.prisma, how is the many-to-many relationship between Article and Tag represented?",
+          "options": [
+            "A) A 'tags' String[] array field directly on the Article model",
+            "B) An explicit junction model 'ArticleTag' with foreign keys to both Article and Tag",
+            "C) An implicit many-to-many via a relation field on both Article and Tag, with Prisma managing the join table automatically",
+            "D) Tags are stored as a JSON column on the Article table"
+          ],
+          "answer": "C",
+          "explanation": "Prisma supports implicit many-to-many relations: when both models declare a relation field pointing to each other without an explicit @relation referencing a foreign key, Prisma auto-generates and manages the join table. This is the pattern used for Article ↔ Tag in this schema."
+        },
+        {
+          "question": "What is the purpose of the global variable trick in src/prisma/prisma-client.ts?",
+          "options": [
+            "A) To share a single database connection across multiple worker threads",
+            "B) To prevent multiple PrismaClient instances from being created during hot-module-reload in development, which would exhaust the connection pool",
+            "C) To cache query results in memory for performance",
+            "D) To allow the Prisma client to be mocked in Jest tests"
+          ],
+          "answer": "B",
+          "explanation": "In Node.js development with hot-reload (ts-node-dev, nodemon), modules can be re-evaluated on each file change. Without the global singleton guard, each reload would instantiate a new PrismaClient and open new database connections, quickly exhausting PostgreSQL's connection limit."
+        },
+        {
+          "question": "The User model in schema.prisma has two self-referential relation arrays. Which pair of field names correctly describes the follow relationship?",
+          "options": [
+            "A) 'friends' and 'friendOf'",
+            "B) 'following' and 'followers'",
+            "C) 'follows' and 'followedBy'",
+            "D) 'subscriptions' and 'subscribers'"
+          ],
+          "answer": "C",
+          "explanation": "schema.prisma defines 'follows' (users this person follows) and 'followedBy' (users who follow this person) as the two sides of the self-referential many-to-many User relation. This naming is consistent with how the profile service checks follow status."
+        },
+        {
+          "question": "Compared to the legacy models/Article.js Mongoose schema, how does the modern Prisma schema handle article favorites?",
+          "options": [
+            "A) Both use a 'favoritesCount' integer field that is incremented/decremented on each favorite action",
+            "B) The Mongoose model used a 'favoritesCount' counter and a 'favoritedBy' user-ID array, while Prisma uses a proper relational join table between User and Article",
+            "C) The Prisma schema removes favorites entirely and computes them in the service layer",
+            "D) Both use an identical favorites array field — nothing changed in the migration"
+          ],
+          "answer": "B",
+          "explanation": "The legacy Mongoose model stored favorites as a denormalized array of user IDs plus a counter field. The Prisma schema replaces this with a proper many-to-many relation ('favoritedBy' on Article), which is normalized and queryable via SQL joins — a key design improvement in the TypeScript rewrite."
+        },
+        {
+          "question": "Why does the seed script in src/prisma/seed.ts use 'upsert' instead of 'create' for inserting demo data?",
+          "options": [
+            "A) 'create' is not available in Prisma's write API",
+            "B) 'upsert' is faster than 'create' for bulk inserts",
+            "C) 'upsert' makes the seed script idempotent — running it multiple times will not duplicate records or throw unique-constraint errors",
+            "D) 'upsert' automatically handles database migrations before inserting"
+          ],
+          "answer": "C",
+          "explanation": "Using 'upsert' (insert or update on conflict) allows developers to re-run 'npm run seed' on an already-seeded database without getting duplicate-key errors. This is a standard best practice for seed scripts in any relational database project."
+        }
+      ],
+      "hands_on_task": "Open schema.prisma and draw an entity-relationship diagram (on paper or in a markdown file) showing all five models (User, Article, Comment, Tag, and any implicit join tables) with their primary keys, foreign keys, and cardinalities. Then add a new optional 'bio' field (String?) to the Tag model, run 'npx prisma migrate dev --name add-tag-bio' to generate and apply the migration, and inspect the generated SQL file in prisma/migrations/ to verify the ALTER TABLE statement Prisma produced."
+    },
+    {
+      "day": 3,
+      "title": "Authentication & Security",
+      "focus": "Understand the complete security model: how passwords are hashed, how JWTs are issued and validated, and how the auth middleware gate-keeps every protected route.",
+      "objectives": [
+        "Trace the full user registration flow from HTTP request body through bcrypt hashing to JWT response",
+        "Trace the login flow and explain why a timing-safe comparison matters for password checking",
+        "Explain how auth.ts uses express-jwt to populate req.auth and the difference between 'required' and 'optional' auth on routes",
+        "Identify the JWT payload shape and the expiry strategy used in auth.service.ts",
+        "Explain how the global UnauthorizedError handler in main.ts connects to the express-jwt middleware"
+      ],
+      "files_to_read": [
+        {
+          "path": "src/app/routes/auth/auth.ts",
+          "reading_notes": "The JWT middleware file. Find the two exported middleware variants — one that requires a valid token (returns 401 if missing or invalid) and one where a token is optional (proceeds without error if no token is present, but populates req.auth if one is provided). Note which header name and scheme (Bearer) express-jwt expects. This distinction between required/optional auth is used across all four controllers."
+        },
+        {
+          "path": "src/app/routes/auth/auth.service.ts",
+          "reading_notes": "The hottest file in the modern TypeScript layer (3 commits, 184 lines). Read every exported function: createUser (bcrypt.hash + prisma.user.create + JWT sign), login (prisma.user.findUnique + bcrypt.compare + JWT sign), getCurrentUser, updateUser (partial update with conditional re-hash if password changed). Pay close attention to the JWT payload — what fields are embedded and what the expiry is set to."
+        },
+        {
+          "path": "src/app/routes/auth/auth.controller.ts",
+          "reading_notes": "Read how each auth route is defined: POST /api/users (register), POST /api/users/login, GET /api/user (requires auth), PUT /api/user (requires auth). Notice how the controller extracts req.auth.user.id for the authenticated routes — this id comes directly from the validated JWT payload populated by auth.ts middleware."
+        },
+        {
+          "path": "src/app/models/http-exception.model.ts",
+          "reading_notes": "Small but important. Understand the HttpException class constructor — it stores a statusCode and a structured errors object. This is what service functions throw when they detect a domain-level error (e.g., duplicate email, wrong password). The global handler in main.ts catches it and returns the statusCode with the errors body."
+        },
+        {
+          "path": "models/User.js",
+          "reading_notes": "Review the legacy Mongoose User model one more time, now with focus on its JWT and bcrypt methods. Notice that in the old model, 'setPassword', 'validPassword', and 'generateJWT' were instance methods on the Mongoose document. In the modern design these became pure functions in auth.service.ts — a cleaner separation of concerns."
+        }
+      ],
+      "concepts": [
+        "bcrypt work factor and why password hashing is intentionally slow (defense against brute-force)",
+        "JWT structure: header.payload.signature — what lives in each part and why the payload is not encrypted",
+        "Stateless authentication: why the server does not store sessions and what the trade-offs are",
+        "express-jwt middleware: how it verifies the signature, decodes the payload, and attaches it to req.auth",
+        "Optional vs required auth: how a single route can behave differently for authenticated vs anonymous callers",
+        "HttpException pattern: throwing structured errors from service functions that map to HTTP status codes"
+      ],
+      "quiz": [
+        {
+          "question": "In auth.service.ts, what happens when a user calls 'updateUser' with a new password? How is the password handled differently from other fields?",
+          "options": [
+            "A) The new password is stored in plain text because it will be hashed at login time",
+            "B) The new password is hashed with bcrypt only if the password field is present in the update payload; other fields are updated without any transformation",
+            "C) Any call to updateUser always re-hashes the existing password to rotate it",
+            "D) Passwords cannot be changed via updateUser — a separate changePassword endpoint is required"
+          ],
+          "answer": "B",
+          "explanation": "auth.service.ts checks whether a 'password' key is present in the update payload. Only if it is present does it call bcrypt.hash on the new value before passing it to prisma.user.update. Other profile fields (email, username, bio, image) are passed through directly."
+        },
+        {
+          "question": "auth.ts exports two middleware configurations. What is the key behavioral difference between them regarding an incoming request with no Authorization header?",
+          "options": [
+            "A) Both configurations reject the request with a 401 if no Authorization header is present",
+            "B) The 'required' configuration rejects with 401; the 'optional' configuration passes the request through with req.auth set to undefined",
+            "C) The 'optional' configuration generates a guest JWT automatically if no header is present",
+            "D) Both configurations pass the request through — authentication is only enforced in the controller"
+          ],
+          "answer": "B",
+          "explanation": "express-jwt supports a 'credentialsRequired' option. When set to false (optional auth), a missing or invalid token does not trigger the UnauthorizedError — req.auth is simply undefined. Routes like GET /api/articles use optional auth so anonymous users can browse articles while authenticated users see personalized data (e.g., favorited status)."
+        },
+        {
+          "question": "When a user successfully logs in via POST /api/users/login, what is included in the JWT payload that auth.service.ts generates?",
+          "options": [
+            "A) The user's hashed password, email, and username so the server can avoid database lookups",
+            "B) Only the user's database ID (and an expiry), keeping the token minimal and the sensitive data server-side",
+            "C) The user's plaintext email, username, bio, and image URL",
+            "D) A session ID that maps to a server-side session object stored in Redis"
+          ],
+          "answer": "B",
+          "explanation": "auth.service.ts embeds the user's database ID (and sets an expiry) in the JWT payload. The controller then uses req.auth.user.id from the decoded token to fetch the full user record from the database when needed. Storing only the ID keeps the token small and avoids exposing sensitive data in a client-readable payload."
+        },
+        {
+          "question": "The global error handler in main.ts handles 'UnauthorizedError' separately. Where does this error class come from and what triggers it?",
+          "options": [
+            "A) It is a custom class defined in src/app/models/http-exception.model.ts and thrown manually in auth.service.ts",
+            "B) It is thrown by the express-jwt middleware when a JWT is missing on a required-auth route or when the JWT signature is invalid",
+            "C) It is thrown by bcryptjs when a password comparison fails",
+            "D) It is a generic Node.js error thrown whenever a Promise rejects inside a controller"
+          ],
+          "answer": "B",
+          "explanation": "express-jwt throws an UnauthorizedError (from the 'express-jwt' package) when credentials are required but absent, or when the token fails signature verification. main.ts catches this by checking 'err.name === UnauthorizedError' and responds with a 401 status before the HttpException or generic 500 handlers run."
+        },
+        {
+          "question": "Why is bcrypt.compare used instead of a simple equality check (storedHash === bcrypt.hash(input)) when verifying a login password?",
+          "options": [
+            "A) bcrypt.compare is faster than hashing the input again",
+            "B) bcrypt.hash is non-deterministic — the same input produces a different hash each time due to the random salt, so you must use bcrypt.compare which extracts the salt from the stored hash",
+            "C) Node.js does not allow synchronous string comparison for security reasons",
+            "D) bcrypt.compare automatically updates the hash to a higher work factor on each login"
+          ],
+          "answer": "B",
+          "explanation": "bcrypt incorporates a random salt into the hash output. Each call to bcrypt.hash('password', rounds) produces a different string even for identical inputs. bcrypt.compare extracts the salt embedded in the stored hash, hashes the candidate password with that same salt, and compares the results — this is the only correct way to verify a bcrypt-hashed password."
+        }
+      ],
+      "hands_on_task": "Using Postman or curl, complete the full auth lifecycle: (1) POST /api/users with a new email/username/password and capture the JWT in the response; (2) decode the JWT payload manually (base64-decode the middle segment) and record what fields are in it; (3) make a GET /api/user request with the token in the Authorization: Token <jwt> header and verify the response; (4) make the same GET /api/user request without the header and confirm a 401 response. Finally, add a console.log in auth.service.ts to print the bcrypt round count on every login and restart the server to verify it fires."
+    },
+    {
+      "day": 4,
+      "title": "Core Business Logic — Articles",
+      "focus": "Deep-dive into the most complex feature domain: article CRUD, filtering, pagination, the feed, favorites, comments, and the mapper/DTO pattern.",
+      "objectives": [
+        "Read and explain every function exported from article.service.ts and the Prisma query patterns each uses",
+        "Explain the mapper pattern: why article.mapper.ts and author.mapper.ts exist and what problem they solve",
+        "Describe how article filtering (by tag, author, favorited-by) is built using a dynamic Prisma 'where' object",
+        "Trace the slug generation strategy and explain what happens if two articles have the same title",
+        "Explain how the article feed differs from the global article list in terms of the Prisma query it produces"
+      ],
+      "files_to_read": [
+        {
+          "path": "src/app/routes/article/article.service.ts",
+          "reading_notes": "The most complex file in the codebase per architecture.json. Read every function. For 'getArticles', trace how the optional query parameters (tag, author, favorited, limit, offset) are translated into a Prisma 'where' clause. For 'createArticle', note how slugify is called and how tags are connected via nested 'create' or 'connectOrCreate'. For 'favoriteArticle' / 'unfavoriteArticle', observe the Prisma connect/disconnect pattern. For 'getArticlesFeed', see how it filters by the current user's followed authors."
+        },
+        {
+          "path": "src/app/routes/article/article.mapper.ts",
+          "reading_notes": "The DTO mapper. Understand the input type (raw Prisma Article result with nested relations) and the output shape (the RealWorld API ArticleResponse contract). Note every field transformation: how the boolean 'favorited' is computed from the favoritedBy array, how 'favoritesCount' is derived, how tagList is extracted. This mapper is the boundary between the database representation and the API contract."
+        },
+        {
+          "path": "src/app/routes/article/author.mapper.ts",
+          "reading_notes": "A smaller mapper that converts a Prisma User result into the nested 'author' object within an ArticleResponse. Note how it computes the 'following' boolean — it checks whether the current user's ID is in the author's 'followedBy' array. This is the same logic reused in the profile layer."
+        },
+        {
+          "path": "src/app/routes/article/article.controller.ts",
+          "reading_notes": "Read each route handler and note the auth pattern: some routes use required auth, some use optional auth (e.g., GET /api/articles is accessible anonymously but shows personalized data when authenticated). Observe how the controller passes req.auth?.user?.id into service calls — the ? operator makes it safe for unauthenticated callers."
+        },
+        {
+          "path": "routes/api/articles.js",
+          "reading_notes": "Legacy JavaScript articles route (9 commits — the most-changed feature file in the old codebase). Compare its filtering logic, favorites handling, and comment management with article.service.ts. Notice the architectural differences: the old code performed Mongoose queries inline in the route handler (no service layer), while the modern version delegates all logic to the service and uses mappers for the response shape."
+        }
+      ],
+      "concepts": [
+        "Dynamic Prisma 'where' clause construction for multi-parameter filtering",
+        "Prisma nested writes: 'create', 'connectOrCreate', 'connect', 'disconnect' for relation fields",
+        "DTO (Data Transfer Object) pattern and why mappers decouple the ORM model from the API contract",
+        "Slug generation with the 'slugify' library and collision-handling strategies",
+        "Cursor-based vs offset-based pagination — this codebase uses limit/offset",
+        "Feed vs global list: how a social graph query differs from a simple filtered query"
+      ],
+      "quiz": [
+        {
+          "question": "In article.service.ts, how are article tags handled when a new article is created with a 'tagList' that includes tags that may or may not already exist in the Tag table?",
+          "options": [
+            "A) The service first deletes all existing tags and re-inserts the full list on every article creation",
+            "B) Prisma's 'connectOrCreate' is used for each tag — it connects to an existing tag by name if it exists, or creates a new one if it does not",
+            "C) Tags are stored as a comma-separated string in a VARCHAR column, bypassing the relation table",
+            "D) The controller pre-fetches all existing tags and manually computes which to create vs connect before calling the service"
+          ],
+          "answer": "B",
+          "explanation": "article.service.ts uses Prisma's 'connectOrCreate' nested write for the tagList relation. For each tag name in the input array, Prisma either connects the article to an existing Tag record (matched by the unique 'name' field) or creates a new Tag and connects it. This avoids duplicate tags and keeps the tag table normalized."
+        },
+        {
+          "question": "In article.mapper.ts, how is the 'favorited' boolean field on the ArticleResponse computed?",
+          "options": [
+            "A) A separate database query is made inside the mapper to check the favorites join table",
+            "B) The mapper checks whether the currentUserId is present in the 'favoritedBy' array that Prisma eagerly loaded with the article",
+            "C) The service computes 'favorited' and passes it as a separate argument to the mapper",
+            "D) 'favorited' is stored as a boolean column on the Article table and returned directly"
+          ],
+          "answer": "B",
+          "explanation": "article.mapper.ts receives the Prisma Article result with the 'favoritedBy' relation eagerly loaded (an array of User objects). It checks whether the current user's ID appears in that array using .some() or .find() — no extra query is needed. This is a deliberate design: include all needed relations in the initial Prisma query, then compute derived fields in the mapper."
+        },
+        {
+          "question": "How does the 'getArticlesFeed' function in article.service.ts differ from 'getArticles' at the database query level?",
+          "options": [
+            "A) 'getArticlesFeed' returns articles in reverse alphabetical order while 'getArticles' returns them by creation date",
+            "B) 'getArticlesFeed' filters articles to only those authored by users the current user follows, whereas 'getArticles' applies tag/author/favorited filters against the full article table",
+            "C) 'getArticlesFeed' uses a raw SQL query while 'getArticles' uses the Prisma query builder",
+            "D) 'getArticlesFeed' is identical to 'getArticles' but additionally increments a 'views' counter"
+          ],
+          "answer": "B",
+          "explanation": "The feed query adds a 'where: { author: { followedBy: { some: { id: currentUserId } } } }' condition, scoping results to articles written by users the current user follows. The global list uses tag/author/favorited filters with no social graph constraint. Both support limit/offset pagination."
+        },
+        {
+          "question": "The 'slugify' library is used when creating articles. What is the slug used for and what problem could arise if two users create articles with identical titles?",
+          "options": [
+            "A) The slug is only used for display purposes; duplicate slugs are allowed because the article ID is the primary key for lookups",
+            "B) The slug is used as the unique URL identifier for an article; duplicate titles would produce duplicate slugs, causing a unique-constraint violation unless a suffix (e.g., timestamp or random string) is appended",
+            "C) slugify hashes the title with SHA-256, so identical titles always produce different slugs",
+            "D) The slug field is not unique in the Prisma schema, so duplicate slugs are silently stored"
+          ],
+          "answer": "B",
+          "explanation": "The RealWorld spec uses the slug as the URL-safe article identifier (e.g., GET /api/articles/:slug). schema.prisma marks the slug field @unique. If two articles have the same title, slugify produces the same base slug, causing Prisma to throw a unique-constraint error. Common mitigations include appending a timestamp or nanoid suffix — worth checking whether the current service implementation handles this."
+        },
+        {
+          "question": "In author.mapper.ts, how is the 'following' boolean (whether the current user follows the article's author) determined?",
+          "options": [
+            "A) A separate Prisma query is issued inside the mapper to check the User follows join table",
+            "B) The mapper checks whether the currentUserId exists in the author's eagerly-loaded 'followedBy' array",
+            "C) The 'following' flag is computed in article.service.ts and passed as a separate parameter to the mapper",
+            "D) 'following' is always false for article responses; it is only computed in the profile endpoint"
+          ],
+          "answer": "B",
+          "explanation": "author.mapper.ts receives the author's User object with the 'followedBy' relation included. It checks whether the current user's ID appears in the 'followedBy' array to set the 'following' boolean. This is the same pattern used in profile.utils.ts — a deliberate reuse of the follow-check logic across the two domains."
+        }
+      ],
+      "hands_on_task": "Using the running dev server: (1) POST /api/articles to create a new article with at least three tags (you'll need to be logged in); (2) GET /api/articles?tag=<one of your tags> and confirm your article appears; (3) POST /api/articles/:slug/favorite and verify the 'favorited' flag flips to true and 'favoritesCount' increments; (4) POST /api/articles/:slug/comments to add a comment; (5) Now open article.service.ts and add the console output for the Prisma query's 'where' clause when getArticles is called with a tag filter — restart and repeat step 2 to see the constructed query object."
+    },
+    {
+      "day": 5,
+      "title": "Profiles, Tags & Testing",
+      "focus": "Complete the feature map with profile/follow logic and tag retrieval, then understand how the test suite is structured and how the CI pipeline validates every change.",
+      "objectives": [
+        "Trace the follow and unfollow flow from HTTP request through profile.service.ts to the Prisma self-referential relation update",
+        "Explain how profile.utils.ts avoids duplicating the 'following' computation that author.mapper.ts also performs",
+        "Understand the tag.service.ts query and why it is the simplest service in the codebase",
+        "Read the Jest test configuration and identify what types of tests exist (unit vs integration) and how they are run",
+        "Read .circleci/config.yml and describe each CI job step from checkout to test execution"
+      ],
+      "files_to_read": [
+        {
+          "path": "src/app/routes/profile/profile.service.ts",
+          "reading_notes": "Read the three functions: getProfile (find user by username, compute following status), followUser (prisma.user.update with nested connect on the 'follows' relation), unfollowUser (prisma.user.update with nested disconnect). The Prisma 'connect'/'disconnect' API for self-referential relations is the key concept here — compare it with how favorites use the same pattern on Article."
+        },
+        {
+          "path": "src/app/routes/profile/profile.utils.ts",
+          "reading_notes": "A small utility that computes the ProfileResponse shape. Note that it performs the same 'is currentUserId in followedBy?' check that author.mapper.ts does. This shared logic is the primary candidate for refactoring if you wanted to DRY up the codebase — but note it has intentionally not been merged, reflecting the project's minimal-abstraction philosophy."
+        },
+        {
+          "path": "src/app/routes/tag/tag.service.ts",
+          "reading_notes": "The simplest service file. It issues a single Prisma findMany on the Tag model and returns the tag names. There is no auth requirement, no filtering, and no complex mapping. Reading this after article.service.ts will reinforce how well-scoped each service is."
+        },
+        {
+          "path": ".circleci/config.yml",
+          "reading_notes": "CI configuration (6 commits — one of the hottest files). Identify: the Docker image used for the test runner, whether a test PostgreSQL service container is spun up, the steps that install dependencies (npm ci), run migrations (prisma migrate deploy), and execute tests (npm test or nx test). Understanding the CI pipeline tells you exactly what 'passing' means for this codebase."
+        },
+        {
+          "path": "src/app/routes/article/article.service.ts",
+          "reading_notes": "Re-read the comment-related functions today (addComment, getComments, deleteComment) with fresh eyes now that you understand the full data model and auth flow. Verify that deleteComment checks whether the requesting user is the comment's author before allowing deletion — this is a common authorization bug surface."
+        }
+      ],
+      "concepts": [
+        "Self-referential Prisma relations for social graph mutations (connect/disconnect on 'follows')",
+        "Shared utility functions vs mappers: when to extract shared logic and when duplication is acceptable",
+        "Tag normalization: why a dedicated Tag table with a unique name constraint prevents duplicates across articles",
+        "Jest configuration in an Nx monorepo: project-level jest.config.ts vs root-level jest.preset.js",
+        "CI pipeline design: test database provisioning, migration execution order, and test isolation",
+        "Authorization checks within service functions: owner-only operations (delete comment, delete article)"
+      ],
+      "quiz": [
+        {
+          "question": "In profile.service.ts, when a user follows another user, which Prisma operation is used and on which model?",
+          "options": [
+            "A) prisma.follow.create is called on a dedicated Follow join model",
+            "B) prisma.user.update is called on the current user's record with a nested 'connect' on the 'follows' relation field",
+            "C) A raw SQL INSERT is used because Prisma does not support self-referential relation mutations",
+            "D) prisma.user.update is called on the target user's record with a nested 'connect' on the 'followedBy' relation field"
+          ],
+          "answer": "B",
+          "explanation": "Because 'follows' is a self-referential many-to-many relation on User, Prisma lets you mutate it via a nested 'connect' inside prisma.user.update on the acting user's record. Prisma handles inserting the row in the implicit join table. The equivalent for unfollow is a nested 'disconnect' in the same update call."
+        },
+        {
+          "question": "profile.utils.ts and author.mapper.ts both compute a 'following' boolean using nearly identical logic. What does this duplication reveal about the codebase's design philosophy?",
+          "options": [
+            "A) It is an unintentional bug — one of the two files should be deleted",
+            "B) The project favors minimal abstraction and explicit code over shared utilities, accepting some duplication to keep each feature domain self-contained and readable",
+            "C) The two files intentionally implement different business rules — author.mapper uses a database query while profile.utils uses an in-memory check",
+            "D) They will be merged in a future refactor tracked by an open GitHub issue"
+          ],
+          "answer": "B",
+          "explanation": "architecture.json notes the project has a 'layered architecture' with dedicated mappers per domain. The duplication between profile.utils.ts and author.mapper.ts is a deliberate trade-off: each domain remains self-contained and easy to read without cross-domain imports. This is a common pragmatic decision in real-world codebases."
+        },
+        {
+          "question": ".circleci/config.yml has 6 commits — making it the 7th hottest file. What does this high churn rate most likely indicate?",
+          "options": [
+            "A) CircleCI's YAML schema changed frequently and required syntax updates",
+            "B) The CI pipeline evolved alongside the codebase: adding test steps, updating Node/Docker versions, wiring in database services, and adjusting environment variables as the project migrated from JS to TypeScript",
+            "C) The CI pipeline was rebuilt from scratch 6 times due to security incidents",
+            "D) CircleCI automatically commits config changes when it detects new test files"
+          ],
+          "answer": "B",
+          "explanation": "hot-files.json states the CI config was 'updated 6 times — defines how the project is tested and deployed.' The TypeScript migration required adding new build steps, database service containers for Prisma, and updated test commands (from mocha to Jest/Nx). CI config churn closely tracks application architecture evolution."
+        },
+        {
+          "question": "tag.service.ts is the simplest service in the codebase. What single Prisma operation does it perform and what does it return?",
+          "options": [
+            "A) prisma.tag.count — returns the number of unique tags",
+            "B) prisma.tag.findMany — returns all Tag records, with the controller extracting the 'name' field for the response array",
+            "C) prisma.article.findMany with a distinct tagList select — returns unique tag strings derived from articles",
+            "D) A raw SQL 'SELECT name FROM Tag ORDER BY usage_count DESC' for popularity sorting"
+          ],
+          "answer": "B",
+          "explanation": "tag.service.ts issues prisma.tag.findMany to retrieve all Tag model records. The tag names are then extracted (either in the service or mapped in the controller) to return the flat string array the RealWorld spec requires at GET /api/tags. No filtering, no auth, no pagination — the simplest possible service."
+        },
+        {
+          "question": "In article.service.ts, what authorization check must pass before a user can delete a comment, and what HTTP error is thrown if it fails?",
+          "options": [
+            "A) The user must be the article's author; a 403 Forbidden HttpException is thrown otherwise",
+            "B) The user must be the comment's author; a 403 Forbidden HttpException is thrown otherwise",
+            "C) Any authenticated user can delete any comment; no ownership check is performed",
+            "D) Only admin users (flagged in the User table) can delete comments; a 401 is thrown otherwise"
+          ],
+          "answer": "B",
+          "explanation": "deleteComment in article.service.ts first fetches the comment and checks that comment.authorId === currentUserId. If the check fails, it throws an HttpException with a 403 status code. This owner-only delete pattern is a common authorization requirement and a frequent source of bugs when accidentally omitted."
+        }
+      ],
+      "hands_on_task": "Write a new Jest integration test file at src/app/routes/profile/profile.service.test.ts that: (1) creates two test users via auth.service.ts createUser; (2) calls profile.service.ts followUser so user A follows user B; (3) calls getProfile as user A and asserts 'following' is true; (4) calls unfollowUser; (5) calls getProfile again and asserts 'following' is false. Run 'npm test' (or 'nx test') and confirm your test passes. This validates your understanding of the self-referential follow relation and the profile service in one concrete exercise."
+    }
+  ],
+  "final_challenge": "Build a new 'Bookmarks' feature end-to-end using the existing codebase patterns. Requirements: (1) Add a 'bookmarks' self-referential many-to-many relation between User and Article in schema.prisma (similar to 'favoritedBy') and run a migration; (2) Add 'bookmarkArticle' and 'unbookmarkArticle' functions to article.service.ts using Prisma connect/disconnect (mirror the favorite/unfavorite pattern); (3) Add a 'bookmarked' boolean to the ArticleResponse DTO and update article.mapper.ts to compute it from the eagerly-loaded 'bookmarkedBy' array; (4) Add POST /api/articles/:slug/bookmark and DELETE /api/articles/:slug/bookmark routes in article.controller.ts with required auth; (5) Register the new routes in routes.ts; (6) Write at least three Jest tests covering: bookmark an article, unbookmark an article, and verify the 'bookmarked' flag in the article response. The feature is complete when all existing tests still pass and your three new tests pass."
+}

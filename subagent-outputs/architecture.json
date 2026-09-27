@@ -1,0 +1,74 @@
+{
+  "summary": "This is a Node.js/Express REST API implementing the RealWorld specification (Conduit API). It is a fully-featured blogging platform backend supporting user authentication, article CRUD operations, user profiles, follow relationships, comments, and article tagging. The application uses PostgreSQL as the database (managed via Prisma ORM), JWT for authentication, bcrypt for password hashing, and follows a layered architecture with Express routers handling HTTP endpoints, services implementing business logic, and Prisma models for database access.\n\nThe project is structured with Nx monorepo tooling for builds and testing, deployed as a Node.js server listening on port 3000 (or a custom PORT environment variable). TypeScript is used throughout for type safety. The codebase was refactored from an older JavaScript/Mongoose version to a modern TypeScript/Prisma/PostgreSQL stack, and both the legacy JS files and the new TypeScript source coexist in the commit history.\n\nThe domain is split into four feature areas: Auth (user registration/login/profile), Articles (CRUD, filtering, feed, favorites, comments), Profiles (user profile retrieval and follow/unfollow), and Tags (listing popular tags). Each feature area has a dedicated controller, service, and mapper layer.",
+  "tech_stack": [
+    { "name": "Express", "role": "HTTP server framework for routing and middleware" },
+    { "name": "TypeScript", "role": "Language for type-safe development, compiled to JavaScript" },
+    { "name": "Prisma", "role": "ORM for database access, schema management, and migrations" },
+    { "name": "PostgreSQL", "role": "Relational database for persisting users, articles, comments, and tags" },
+    { "name": "jsonwebtoken", "role": "JWT token generation and validation for stateless authentication" },
+    { "name": "express-jwt", "role": "Express middleware for JWT verification and authorization" },
+    { "name": "bcryptjs", "role": "Password hashing and comparison for secure user authentication" },
+    { "name": "slugify", "role": "URL-safe slug generation from article titles" },
+    { "name": "cors", "role": "Cross-Origin Resource Sharing middleware for browser client access" },
+    { "name": "body-parser", "role": "Middleware for parsing JSON and URL-encoded request bodies" },
+    { "name": "Nx", "role": "Monorepo build, test orchestration, and project configuration" },
+    { "name": "Jest", "role": "Unit and integration testing framework" }
+  ],
+  "modules": [
+    {
+      "name": "Main Server",
+      "path": "src/main.ts",
+      "responsibility": "Express app initialization, middleware setup (CORS, body-parser), global error handling (UnauthorizedError, HttpException, generic 500), and server startup"
+    },
+    {
+      "name": "Router",
+      "path": "src/app/routes/routes.ts",
+      "responsibility": "Central route aggregator — mounts all feature controllers under /api"
+    },
+    {
+      "name": "Auth",
+      "path": "src/app/routes/auth/",
+      "responsibility": "User registration, login, JWT token issuance, current-user retrieval, profile updates, and password hashing"
+    },
+    {
+      "name": "Articles",
+      "path": "src/app/routes/article/",
+      "responsibility": "Full CRUD for articles, article feed, filtering by tag/author/favorited, favoriting, and comments management"
+    },
+    {
+      "name": "Profiles",
+      "path": "src/app/routes/profile/",
+      "responsibility": "User profile retrieval, follow and unfollow relationships between users"
+    },
+    {
+      "name": "Tags",
+      "path": "src/app/routes/tag/",
+      "responsibility": "Retrieve list of all popular tags used in the system"
+    },
+    {
+      "name": "Prisma ORM",
+      "path": "src/prisma/",
+      "responsibility": "Database schema definition (schema.prisma), Prisma client singleton, seed script for demo data"
+    },
+    {
+      "name": "Models & Exceptions",
+      "path": "src/app/models/",
+      "responsibility": "Custom HttpException class for structured HTTP error responses with status codes and messages"
+    }
+  ],
+  "data_flow": "1. HTTP Client sends a request to the Express server (default port 3000).\n2. Request passes through global middleware: CORS headers, body-parser (JSON / form-encoded).\n3. The /api router (routes.ts) matches the path and dispatches to the correct controller: auth, article, profile, or tag.\n4. The controller checks whether auth is required or optional via the auth middleware (auth.ts).\n5. auth.ts uses express-jwt to extract and verify the Bearer JWT from the Authorization header. On success, req.auth.user.id is populated; on failure for required routes, a 401 UnauthorizedError is thrown.\n6. The controller handler receives the request, extracts params/body, and calls the corresponding service function.\n7. The service (e.g., article.service.ts) executes business logic: input validation, query construction, and Prisma ORM calls.\n8. Prisma translates TypeScript query builder calls into SQL and communicates with PostgreSQL.\n9. The database returns results; the service maps the raw Prisma objects into API response DTOs using mapper utilities (article.mapper.ts, author.mapper.ts, profile.utils.ts).\n10. The controller sends the HTTP response with the appropriate status code and JSON body.\n11. If any error is thrown, it propagates to next() and is caught by the global error handler in main.ts, which returns 401, the HttpException status, or 500.",
+  "mermaid_diagram": "flowchart TD\n    Client[\"HTTP Client\"]\n    Server[\"Express Server\\nmain.ts\"]\n    MW[\"Middleware Stack\\nCORS · body-parser\"]\n    Router[\"API Router\\nroutes.ts  →  /api\"]\n    AuthMW[\"Auth Middleware\\nauth.ts — JWT Validation\"]\n    TagCtrl[\"Tag Controller\"]\n    ArticleCtrl[\"Article Controller\"]\n    ProfileCtrl[\"Profile Controller\"]\n    AuthCtrl[\"Auth Controller\"]\n    TagSvc[\"Tag Service\"]\n    ArticleSvc[\"Article Service\"]\n    ProfileSvc[\"Profile Service\"]\n    AuthSvc[\"Auth Service\"]\n    Mappers[\"Data Mappers\\narticle.mapper · author.mapper\\nprofile.utils\"]\n    Prisma[\"Prisma ORM Client\"]\n    DB[(\"PostgreSQL\\nUsers · Articles · Comments\\nTags · Favorites · Follows\")]\n    ErrHandler[\"Global Error Handler\\nHttpException · UnauthorizedError · 500\"]\n    Response[\"HTTP Response (JSON)\"]\n\n    Client -->|HTTP Request| Server\n    Server --> MW\n    MW --> Router\n    Router -->|/api/tags| TagCtrl\n    Router -->|/api/articles| ArticleCtrl\n    Router -->|/api/profiles| ProfileCtrl\n    Router -->|/api/users| AuthCtrl\n    TagCtrl --> AuthMW\n    ArticleCtrl --> AuthMW\n    ProfileCtrl --> AuthMW\n    AuthCtrl --> AuthSvc\n    AuthMW -->|valid JWT| TagSvc\n    AuthMW -->|valid JWT| ArticleSvc\n    AuthMW -->|valid JWT| ProfileSvc\n    AuthMW -->|invalid JWT| ErrHandler\n    TagSvc --> Prisma\n    ArticleSvc --> Mappers\n    ProfileSvc --> Mappers\n    AuthSvc --> Prisma\n    Mappers --> Prisma\n    Prisma -->|SQL| DB\n    DB -->|Result Set| Prisma\n    TagSvc --> Response\n    ArticleSvc --> Response\n    ProfileSvc --> Response\n    AuthSvc --> Response\n    ErrHandler --> Response\n    Response -->|JSON| Client",
+  "key_files": [
+    { "path": "src/main.ts", "reason": "Entry point — Express init, middleware config, global error handler, server startup" },
+    { "path": "src/app/routes/routes.ts", "reason": "Central router — shows how all feature domains are mounted under /api" },
+    { "path": "src/prisma/schema.prisma", "reason": "Database schema — defines all models (User, Article, Comment, Tag) and their relationships" },
+    { "path": "src/app/routes/article/article.controller.ts", "reason": "Demonstrates full CRUD route definitions, auth decoration, and request/response handling" },
+    { "path": "src/app/routes/article/article.service.ts", "reason": "Most complex service — Prisma queries, filtering, pagination, favorites, comments, tags" },
+    { "path": "src/app/routes/auth/auth.ts", "reason": "JWT middleware — shows how tokens are extracted and validated for optional/required auth" },
+    { "path": "src/app/routes/auth/auth.service.ts", "reason": "User registration/login — bcrypt hashing, JWT generation, and validation patterns" },
+    { "path": "src/app/routes/article/article.mapper.ts", "reason": "DTO mapping layer — converts Prisma model results to API response shape" },
+    { "path": "src/prisma/prisma-client.ts", "reason": "Prisma singleton pattern — prevents multiple client instances in development" },
+    { "path": "src/app/models/http-exception.model.ts", "reason": "Custom exception class for structured HTTP error responses" }
+  ],
+  "entry_point": "src/main.ts — Creates the Express application, registers CORS, body-parser (JSON and URL-encoded), and static-asset middleware, mounts all API routes, registers the global error-handling middleware (handling UnauthorizedError as 401, HttpException with its own code, and anything else as 500), then starts the HTTP server on process.env.PORT or default 3000."
+}

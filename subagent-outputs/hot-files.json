@@ -1,0 +1,76 @@
+{
+  "total_commits": 65,
+  "analysis_summary": "Hot files were identified by running 'git log --name-only' across all 65 commits and counting how many times each file appears in the diff history. This surfaces files that were changed most frequently — a reliable proxy for complexity, bug-proneness, and importance to the feature set. The repository shows a clear migration from an older JavaScript/Mongoose implementation (routes/api/articles.js, models/User.js, app.js) to a modern TypeScript/Prisma stack under src/. Both generations appear in the top list, making them essential reading for understanding how the codebase evolved. README.md tops the list at 15 commits, reflecting ongoing documentation updates. The article and auth domains dominate the TypeScript layer, consistent with them being the most feature-rich areas.",
+  "hot_files": [
+    {
+      "rank": 1,
+      "path": "README.md",
+      "commit_count": 15,
+      "line_count": 58,
+      "why_important": "Most-touched file in the entire history — contains setup instructions, environment configuration, and API documentation. A new developer must read this first to understand how to run and test the project."
+    },
+    {
+      "rank": 2,
+      "path": "package.json",
+      "commit_count": 10,
+      "line_count": 45,
+      "why_important": "Updated whenever dependencies change or npm scripts are added. Reveals the full dependency graph, available scripts (dev server, tests, migrations), and the Node.js engine requirements."
+    },
+    {
+      "rank": 3,
+      "path": "routes/api/articles.js",
+      "commit_count": 9,
+      "line_count": null,
+      "why_important": "The most-changed feature file from the original JavaScript version — the articles API was the most complex domain and saw the most iterative development. Reading the old version alongside the new TypeScript service reveals design decisions and trade-offs."
+    },
+    {
+      "rank": 4,
+      "path": "app.js",
+      "commit_count": 7,
+      "line_count": null,
+      "why_important": "Legacy entry point (JavaScript era) — frequently modified as the Express app was wired up. Comparing it with src/main.ts shows the full TypeScript migration journey."
+    },
+    {
+      "rank": 5,
+      "path": "models/User.js",
+      "commit_count": 7,
+      "line_count": null,
+      "why_important": "The User model from the Mongoose/JavaScript era saw 7 commits — authentication, password hashing, and JWT logic all lived here. Understanding it helps when reading the modern auth.service.ts."
+    },
+    {
+      "rank": 6,
+      "path": "models/Article.js",
+      "commit_count": 6,
+      "line_count": null,
+      "why_important": "Legacy Article Mongoose model — 6 commits tracking schema evolution (slugs, tags, favorites, comments). Directly informs the current Prisma schema structure."
+    },
+    {
+      "rank": 7,
+      "path": ".circleci/config.yml",
+      "commit_count": 6,
+      "line_count": 36,
+      "why_important": "CI pipeline configuration updated 6 times — defines how the project is tested and deployed. New developers should review this to understand the automated test and deployment workflow."
+    },
+    {
+      "rank": 8,
+      "path": "routes/api/index.js",
+      "commit_count": 6,
+      "line_count": null,
+      "why_important": "Legacy API router aggregator — updated whenever a new route file was added. Mirrors the role that src/app/routes/routes.ts plays in the modern codebase."
+    },
+    {
+      "rank": 9,
+      "path": "src/app/routes/auth/auth.service.ts",
+      "commit_count": 3,
+      "line_count": 184,
+      "why_important": "The most frequently modified file in the modern TypeScript src/ layer — handles user registration, login, JWT generation, and profile updates. Security-critical code every contributor must understand."
+    },
+    {
+      "rank": 10,
+      "path": "src/main.ts",
+      "commit_count": 3,
+      "line_count": 58,
+      "why_important": "The modern application entry point — touched 3 times as middleware and error handling evolved. Essential for understanding how the Express app is bootstrapped and how global errors are managed."
+    }
+  ]
+}
